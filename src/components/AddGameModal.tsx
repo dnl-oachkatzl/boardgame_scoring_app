@@ -140,7 +140,7 @@ export function AddGameModal({ visible, onClose, onAdd }: Props) {
 }
 
 const styles = StyleSheet.create({
-  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.4)' },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)' },
   avoidingView: { flex: 1, justifyContent: 'flex-end' },
   panel: {
     borderTopLeftRadius: 24,
