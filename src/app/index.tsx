@@ -18,12 +18,36 @@ export default function GameSelectionScreen() {
   const router = useRouter();
   const theme = useTheme();
 
+  const activeSession = state.sessions.find(s => s.id === state.activeSessionId);
+  const activeGameName = activeSession
+    ? state.games.find(g => g.id === activeSession.gameId)?.name
+    : null;
+
   const handleSelect = (gameId: string) => {
     dispatch({ type: 'SELECT_GAME', gameId });
   };
 
   const handleNext = () => {
-    if (state.setupGameId) router.push('/players');
+    if (!state.setupGameId) return;
+    if (state.activeSessionId) {
+      Alert.alert(
+        'End Current Game?',
+        `"${activeGameName}" is still in progress. End it and start a new game?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'End & Continue',
+            style: 'destructive',
+            onPress: () => {
+              dispatch({ type: 'END_SESSION' });
+              router.push('/players');
+            },
+          },
+        ],
+      );
+    } else {
+      router.push('/players');
+    }
   };
 
   const handleDeleteGame = (game: Game) => {
@@ -48,6 +72,17 @@ export default function GameSelectionScreen() {
           data={state.games}
           keyExtractor={g => g.id}
           contentContainerStyle={styles.list}
+          ListHeaderComponent={
+            activeGameName ? (
+              <TouchableOpacity
+                style={styles.resumeBanner}
+                onPress={() => router.push('/scoring')}>
+                <ThemedText type="default" style={styles.resumeText}>
+                  ▶  Resume "{activeGameName}"
+                </ThemedText>
+              </TouchableOpacity>
+            ) : null
+          }
           ListEmptyComponent={
             <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
               No games yet. Add one below.
@@ -146,6 +181,14 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   list: { padding: Spacing.three, gap: Spacing.two },
   empty: { textAlign: 'center', marginTop: Spacing.six },
+  resumeBanner: {
+    backgroundColor: '#3c87f7',
+    borderRadius: 12,
+    padding: Spacing.three,
+    marginBottom: Spacing.two,
+    alignItems: 'center',
+  },
+  resumeText: { color: 'white', fontWeight: '600' },
   card: { padding: Spacing.three, borderRadius: 12, gap: Spacing.one },
   cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   gameName: { fontWeight: '600', flex: 1 },

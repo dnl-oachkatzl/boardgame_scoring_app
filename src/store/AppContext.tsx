@@ -23,6 +23,9 @@ type Action =
   | { type: 'SELECT_GAME'; gameId: string }
   | { type: 'SET_SETUP_PLAYERS'; playerIds: string[] }
   | { type: 'START_SESSION' }
+  | { type: 'END_SESSION' }
+  | { type: 'ADD_PLAYER_TO_SESSION'; playerId: string }
+  | { type: 'ADD_NEW_PLAYER_TO_SESSION'; name: string }
   | { type: 'SET_SCORE'; playerIndex: number; roundIndex: number; score: CellScore }
   | { type: 'ADD_ROUND' };
 
@@ -98,6 +101,36 @@ function reducer(state: State, action: Action): State {
         sessions: [...state.sessions, session],
         activeSessionId: session.id,
       };
+    }
+
+    case 'END_SESSION':
+      return { ...state, activeSessionId: null };
+
+    case 'ADD_PLAYER_TO_SESSION': {
+      if (!state.activeSessionId) return state;
+      const sessions = state.sessions.map(s => {
+        if (s.id !== state.activeSessionId || s.playerIds.includes(action.playerId)) return s;
+        return {
+          ...s,
+          playerIds: [...s.playerIds, action.playerId],
+          scores: [...s.scores, Array(s.roundCount).fill(null)],
+        };
+      });
+      return { ...state, sessions };
+    }
+
+    case 'ADD_NEW_PLAYER_TO_SESSION': {
+      if (!state.activeSessionId) return state;
+      const player: Player = { id: uid(), name: action.name };
+      const sessions = state.sessions.map(s => {
+        if (s.id !== state.activeSessionId) return s;
+        return {
+          ...s,
+          playerIds: [...s.playerIds, player.id],
+          scores: [...s.scores, Array(s.roundCount).fill(null)],
+        };
+      });
+      return { ...state, players: [...state.players, player], sessions };
     }
 
     case 'SET_SCORE': {
