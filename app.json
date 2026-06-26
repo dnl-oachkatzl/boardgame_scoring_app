@@ -3,7 +3,7 @@
     "name": "boardgame_scoring_app",
     "slug": "boardgame_scoring_app",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "boardgamescoringapp",
     "userInterfaceStyle": "automatic",
@@ -19,7 +19,8 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      "expo-screen-orientation"
     ],
     "experiments": {
       "typedRoutes": true

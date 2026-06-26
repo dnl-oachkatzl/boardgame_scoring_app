@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
-import { useState } from 'react';
+import * as ScreenOrientation from 'expo-screen-orientation';
+import { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -13,6 +14,13 @@ import type { CellScore } from '@/store/types';
 export default function ScoringScreen() {
   const { activeSession, activeGame, activePlayers, dispatch } = useAppContext();
   const [inputTarget, setInputTarget] = useState<{ pi: number; ri: number } | null>(null);
+
+  useEffect(() => {
+    ScreenOrientation.unlockAsync();
+    return () => {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    };
+  }, []);
 
   if (!activeSession || !activeGame || activePlayers.length === 0) {
     return (
