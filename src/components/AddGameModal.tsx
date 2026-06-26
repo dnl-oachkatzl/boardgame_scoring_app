@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Modal,
@@ -19,30 +19,38 @@ import { ThemedView } from './themed-view';
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onAdd: (name: string, maxScore: number, scoreRange: { min: number; max: number }) => void;
+  onSave: (name: string, maxScore: number, scoreRange: { min: number; max: number }) => void;
+  initialValues?: { name: string; maxScore: number; scoreRange: { min: number; max: number } };
 }
 
-export function AddGameModal({ visible, onClose, onAdd }: Props) {
+export function AddGameModal({ visible, onClose, onSave, initialValues }: Props) {
   const theme = useTheme();
   const [name, setName] = useState('');
   const [maxScore, setMaxScore] = useState('');
   const [rangeMin, setRangeMin] = useState('0');
   const [rangeMax, setRangeMax] = useState('10');
 
-  const canAdd =
+  useEffect(() => {
+    if (visible) {
+      setName(initialValues?.name ?? '');
+      setMaxScore(initialValues ? String(initialValues.maxScore) : '');
+      setRangeMin(initialValues ? String(initialValues.scoreRange.min) : '0');
+      setRangeMax(initialValues ? String(initialValues.scoreRange.max) : '10');
+    }
+  }, [visible]);
+
+  const isEditing = initialValues !== undefined;
+
+  const canSave =
     name.trim().length > 0 &&
     maxScore.trim().length > 0 &&
     !isNaN(Number(maxScore)) &&
     !isNaN(Number(rangeMin)) &&
     !isNaN(Number(rangeMax));
 
-  const handleAdd = () => {
-    if (!canAdd) return;
-    onAdd(name.trim(), Number(maxScore), { min: Number(rangeMin), max: Number(rangeMax) });
-    setName('');
-    setMaxScore('');
-    setRangeMin('0');
-    setRangeMax('10');
+  const handleSave = () => {
+    if (!canSave) return;
+    onSave(name.trim(), Number(maxScore), { min: Number(rangeMin), max: Number(rangeMax) });
   };
 
   return (
@@ -53,7 +61,7 @@ export function AddGameModal({ visible, onClose, onAdd }: Props) {
         style={styles.avoidingView}>
         <ThemedView type="backgroundElement" style={styles.panel}>
           <ThemedText type="subtitle" style={styles.title}>
-            Add Game
+            {isEditing ? 'Edit Game' : 'Add Game'}
           </ThemedText>
 
           <ThemedText type="small" themeColor="textSecondary">
@@ -114,7 +122,7 @@ export function AddGameModal({ visible, onClose, onAdd }: Props) {
               placeholderTextColor={theme.textSecondary}
               keyboardType="numeric"
               returnKeyType="done"
-              onSubmitEditing={handleAdd}
+              onSubmitEditing={handleSave}
             />
           </View>
 
@@ -125,11 +133,11 @@ export function AddGameModal({ visible, onClose, onAdd }: Props) {
               <ThemedText type="default">Cancel</ThemedText>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.btn, { backgroundColor: canAdd ? '#3c87f7' : theme.backgroundSelected }]}
-              onPress={handleAdd}
-              disabled={!canAdd}>
-              <ThemedText type="default" style={canAdd ? styles.activeText : undefined}>
-                Add
+              style={[styles.btn, { backgroundColor: canSave ? '#3c87f7' : theme.backgroundSelected }]}
+              onPress={handleSave}
+              disabled={!canSave}>
+              <ThemedText type="default" style={canSave ? styles.activeText : undefined}>
+                {isEditing ? 'Save' : 'Add'}
               </ThemedText>
             </TouchableOpacity>
           </View>

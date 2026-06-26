@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Modal,
@@ -19,19 +19,24 @@ import { ThemedView } from './themed-view';
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onAdd: (name: string) => void;
+  onSave: (name: string) => void;
+  initialName?: string;
 }
 
-export function AddPlayerModal({ visible, onClose, onAdd }: Props) {
+export function AddPlayerModal({ visible, onClose, onSave, initialName }: Props) {
   const theme = useTheme();
   const [name, setName] = useState('');
 
-  const canAdd = name.trim().length > 0;
+  useEffect(() => {
+    if (visible) setName(initialName ?? '');
+  }, [visible]);
 
-  const handleAdd = () => {
-    if (!canAdd) return;
-    onAdd(name.trim());
-    setName('');
+  const isEditing = initialName !== undefined;
+  const canSave = name.trim().length > 0;
+
+  const handleSave = () => {
+    if (!canSave) return;
+    onSave(name.trim());
   };
 
   return (
@@ -42,7 +47,7 @@ export function AddPlayerModal({ visible, onClose, onAdd }: Props) {
         style={styles.avoidingView}>
         <ThemedView type="backgroundElement" style={styles.panel}>
           <ThemedText type="subtitle" style={styles.title}>
-            Add Player
+            {isEditing ? 'Edit Player' : 'Add Player'}
           </ThemedText>
 
           <ThemedText type="small" themeColor="textSecondary">
@@ -56,7 +61,7 @@ export function AddPlayerModal({ visible, onClose, onAdd }: Props) {
             placeholderTextColor={theme.textSecondary}
             autoFocus
             returnKeyType="done"
-            onSubmitEditing={handleAdd}
+            onSubmitEditing={handleSave}
           />
 
           <View style={styles.buttons}>
@@ -66,11 +71,11 @@ export function AddPlayerModal({ visible, onClose, onAdd }: Props) {
               <ThemedText type="default">Cancel</ThemedText>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.btn, { backgroundColor: canAdd ? '#3c87f7' : theme.backgroundSelected }]}
-              onPress={handleAdd}
-              disabled={!canAdd}>
-              <ThemedText type="default" style={canAdd ? styles.activeText : undefined}>
-                Add
+              style={[styles.btn, { backgroundColor: canSave ? '#3c87f7' : theme.backgroundSelected }]}
+              onPress={handleSave}
+              disabled={!canSave}>
+              <ThemedText type="default" style={canSave ? styles.activeText : undefined}>
+                {isEditing ? 'Save' : 'Add'}
               </ThemedText>
             </TouchableOpacity>
           </View>

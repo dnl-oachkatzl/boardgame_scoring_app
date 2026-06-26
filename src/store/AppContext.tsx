@@ -15,7 +15,11 @@ type State = AppData & {
 type Action =
   | { type: 'LOADED'; data: AppData }
   | { type: 'ADD_GAME'; game: Omit<Game, 'id'> }
+  | { type: 'EDIT_GAME'; gameId: string; changes: Omit<Game, 'id'> }
+  | { type: 'DELETE_GAME'; gameId: string }
   | { type: 'ADD_PLAYER'; player: Omit<Player, 'id'> }
+  | { type: 'EDIT_PLAYER'; playerId: string; name: string }
+  | { type: 'DELETE_PLAYER'; playerId: string }
   | { type: 'SELECT_GAME'; gameId: string }
   | { type: 'SET_SETUP_PLAYERS'; playerIds: string[] }
   | { type: 'START_SESSION' }
@@ -42,10 +46,36 @@ function reducer(state: State, action: Action): State {
       return { ...state, games: [...state.games, game] };
     }
 
+    case 'EDIT_GAME':
+      return {
+        ...state,
+        games: state.games.map(g => g.id === action.gameId ? { id: g.id, ...action.changes } : g),
+      };
+
+    case 'DELETE_GAME':
+      return {
+        ...state,
+        games: state.games.filter(g => g.id !== action.gameId),
+        setupGameId: state.setupGameId === action.gameId ? null : state.setupGameId,
+      };
+
     case 'ADD_PLAYER': {
       const player: Player = { id: uid(), ...action.player };
       return { ...state, players: [...state.players, player] };
     }
+
+    case 'EDIT_PLAYER':
+      return {
+        ...state,
+        players: state.players.map(p => p.id === action.playerId ? { ...p, name: action.name } : p),
+      };
+
+    case 'DELETE_PLAYER':
+      return {
+        ...state,
+        players: state.players.filter(p => p.id !== action.playerId),
+        setupPlayerIds: state.setupPlayerIds.filter(id => id !== action.playerId),
+      };
 
     case 'SELECT_GAME':
       return { ...state, setupGameId: action.gameId, setupPlayerIds: [] };

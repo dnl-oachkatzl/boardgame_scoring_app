@@ -1,6 +1,6 @@
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AddPlayerModal } from '@/components/AddPlayerModal';
@@ -9,10 +9,12 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAppContext } from '@/store/AppContext';
+import type { Player } from '@/store/types';
 
 export default function PlayerSelectionScreen() {
   const { state, dispatch } = useAppContext();
   const [showAdd, setShowAdd] = useState(false);
+  const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const router = useRouter();
   const theme = useTheme();
 
@@ -40,6 +42,21 @@ export default function PlayerSelectionScreen() {
     if (state.setupPlayerIds.length === 0) return;
     dispatch({ type: 'START_SESSION' });
     router.push('/scoring');
+  };
+
+  const handleDeletePlayer = (player: Player) => {
+    Alert.alert(
+      'Delete Player',
+      `Delete "${player.name}"? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => dispatch({ type: 'DELETE_PLAYER', playerId: player.id }),
+        },
+      ],
+    );
   };
 
   const canStart = state.setupPlayerIds.length > 0;
@@ -80,6 +97,20 @@ export default function PlayerSelectionScreen() {
                     </ThemedText>
                   )}
                 </View>
+                <View style={styles.actions}>
+                  <TouchableOpacity
+                    onPress={() => setEditingPlayer(item)}
+                    style={styles.actionBtn}
+                    hitSlop={8}>
+                    <ThemedText type="small" style={styles.actionEdit}>✏</ThemedText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleDeletePlayer(item)}
+                    style={styles.actionBtn}
+                    hitSlop={8}>
+                    <ThemedText type="small" style={styles.actionDelete}>✕</ThemedText>
+                  </TouchableOpacity>
+                </View>
                 {selected && (
                   <ThemedText type="default" style={styles.check}>
                     ✓
@@ -111,9 +142,20 @@ export default function PlayerSelectionScreen() {
       <AddPlayerModal
         visible={showAdd}
         onClose={() => setShowAdd(false)}
-        onAdd={name => {
+        onSave={name => {
           dispatch({ type: 'ADD_PLAYER', player: { name } });
           setShowAdd(false);
+        }}
+      />
+
+      <AddPlayerModal
+        visible={editingPlayer !== null}
+        onClose={() => setEditingPlayer(null)}
+        initialName={editingPlayer?.name}
+        onSave={name => {
+          if (!editingPlayer) return;
+          dispatch({ type: 'EDIT_PLAYER', playerId: editingPlayer.id, name });
+          setEditingPlayer(null);
         }}
       />
     </ThemedView>
@@ -132,9 +174,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  playerInfo: { gap: 2 },
+  playerInfo: { gap: 2, flex: 1 },
   playerName: { fontWeight: '600' },
-  check: { color: '#3c87f7', fontWeight: '700' },
+  actions: { flexDirection: 'row', gap: Spacing.two },
+  actionBtn: { padding: 4 },
+  actionEdit: { color: '#3c87f7' },
+  actionDelete: { color: '#e05252' },
+  check: { color: '#3c87f7', fontWeight: '700', marginLeft: Spacing.two },
   footer: { flexDirection: 'row', padding: Spacing.three, gap: Spacing.two },
   btn: { flex: 1, padding: Spacing.three, borderRadius: 12, alignItems: 'center' },
   activeText: { color: 'white', fontWeight: '600' },
